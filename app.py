@@ -1,14 +1,18 @@
 from flask import Flask, request
 from flask_cors import CORS
+from dotenv import load_dotenv
+from supabase import create_client
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-animals = [
-    {"id": 1, "name": "Octopus"},
-    {"id": 2, "name": "Fox"}
-]
+URL=os.getenv("VITE_SUPABASE_URL")
+KEY=os.getenv("VITE_SUPABASE_PUBLISHABLE_KEY")
 
+supabase=create_client(URL,KEY)
 
 @app.route("/")
 def home():
@@ -17,21 +21,19 @@ def home():
 
 @app.route("/animals", methods=["GET"])
 def get_animals():
-    return animals
+    response=supabase.table("animals").select("*").execute()
+   
+    return response.data 
 
 
 @app.route("/animals", methods=["POST"])
 def add_animal():
     data = request.get_json()
 
-    new_animal = {
-        "id": len(animals) + 1,
-        "name": data["name"]
-    }
+    response = supabase.table("animals").insert(data).execute()
 
-    animals.append(new_animal)
 
-    return new_animal, 201
+    return response, 201
 
 
 if __name__ == "__main__":
